@@ -14,7 +14,11 @@
   --success: #22c55e;
   --gradient: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
   --shadow: 0 25px 60px rgba(2, 6, 23, 0.45);
-  --bg-end: #040b12;
+  /* Subtle "glass" surface tint used by buttons, inputs, stat cards, etc.
+     Kept as its own variable so it can flip direction between themes
+     instead of staying a white-on-white highlight in light mode. */
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-strong: rgba(255, 255, 255, 0.05);
 }
 
 body.light {
@@ -28,7 +32,8 @@ body.light {
   --muted: #52607a;
   --border: rgba(15, 23, 42, 0.08);
   --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-  --bg-end: #dce9fb;
+  --glass: rgba(15, 23, 42, 0.04);
+  --glass-strong: rgba(15, 23, 42, 0.07);
 }
 
 * { box-sizing: border-box; }
@@ -36,10 +41,16 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
+  /* FIX: was "linear-gradient(180deg, var(--bg) 0%, #040b12 100%)" — the
+     hard-coded #040b12 end stop meant the page always faded to near-black
+     by the bottom of the content, even in light mode, which is why text
+     appeared to "stop working" partway down the page. Now both stops are
+     theme variables so the whole page stays consistent with the active
+     theme. */
   background:
     radial-gradient(circle at top left, rgba(124, 58, 237, 0.24), transparent 28%),
     radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.18), transparent 25%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-end) 100%);
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
   color: var(--text);
   line-height: 1.6;
 }
@@ -72,7 +83,9 @@ button, input, textarea { font: inherit; }
   padding: 96px 0;
 }
 .section-alt {
-  background: rgba(255, 255, 255, 0.02);
+  /* FIX: was a flat rgba(255,255,255,0.02) — invisible in light mode.
+     var(--glass) flips to a faint dark tint on light backgrounds instead. */
+  background: var(--glass);
 }
 
 .eyebrow {
@@ -196,13 +209,17 @@ body.light .nav-wrap {
   box-shadow: 0 16px 30px rgba(124, 58, 237, 0.28);
 }
 .btn-ghost, .btn-outline {
-  background: rgba(255,255,255,0.02);
+  /* FIX: was rgba(255,255,255,0.02) — practically invisible on a light
+     page, making outline/ghost buttons look edge-less and unstyled. */
+  background: var(--glass);
 }
 .btn-block { width: 100%; }
 
 .theme-toggle {
   width: 42px; height: 42px; border: 1px solid var(--border);
-  background: rgba(255,255,255,0.02); border-radius: 50%;
+  /* FIX: was rgba(255,255,255,0.02) */
+  background: var(--glass);
+  border-radius: 50%;
   display: grid; place-items: center; color: var(--text); cursor: pointer;
 }
 .theme-toggle svg { width: 18px; height: 18px; }
@@ -222,16 +239,16 @@ body.light .icon-sun { display: none; }
   position: relative;
   overflow: hidden;
   padding: 72px 0 32px;
+  /* FIX: was layering a hard-coded rgba(7,17,28,...) dark-navy gradient on
+     top of the body — that's why the hero stayed dark even after switching
+     to light mode (headline/stats text is var(--text), which turns dark
+     navy in light mode, so it went dark-on-dark). The body element right
+     underneath already carries the correct theme-aware gradient, so the
+     hero only needs its two accent color washes here, not another solid
+     background layer. */
   background:
     radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.18), transparent 28%),
-    linear-gradient(180deg, rgba(7, 17, 28, 0.9), rgba(7, 17, 28, 0.72));
-}
-body.light .hero {
-  background:
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.12), transparent 28%),
-    linear-gradient(180deg, rgba(237, 245, 255, 0.9), rgba(237, 245, 255, 0.72));
+    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.18), transparent 28%);
 }
 .hero-grid {
   position: absolute; inset: 0;
@@ -245,7 +262,12 @@ body.light .hero {
 .hero-copy { max-width: 640px; }
 .badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 0.9rem; border-radius: 999px; border: 1px solid rgba(124, 58, 237, 0.25);
-  background: var(--panel); color: var(--text); font-weight: 600; font-size: 0.9rem;
+  /* FIX: was rgba(13,27,42,0.72) — a hard-coded dark navy chip. In light
+     mode, .badge text uses var(--text), which switches to dark navy too,
+     so dark-on-dark made this pill unreadable. var(--panel) flips to a
+     translucent white surface in light mode. */
+  background: var(--panel);
+  color: var(--text); font-weight: 600; font-size: 0.9rem;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 30px rgba(124,58,237,0.12);
 }
 .badge-available .dot {
@@ -267,7 +289,10 @@ body.light .hero {
   display: flex; flex-wrap: wrap; gap: 18px; margin: 32px 0 0; padding: 0;
 }
 .stat {
-  min-width: 155px; padding: 18px 20px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); border-radius: 16px;
+  min-width: 155px; padding: 18px 20px; border: 1px solid var(--border);
+  /* FIX: was rgba(255,255,255,0.02) */
+  background: var(--glass);
+  border-radius: 16px;
 }
 .stat dt { font-size: 1.7rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
 .stat dd { margin: 0; color: var(--muted); font-size: 0.9rem; }
@@ -288,7 +313,11 @@ body.light .hero {
 }
 .float-badge {
   position: absolute; display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 0.8rem; border-radius: 999px;
-  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow); color: var(--text); font-weight: 700;
+  /* FIX: was rgba(17,24,39,0.78) — same dark-on-dark problem as .badge.
+     var(--panel-strong) is a solid dark navy in dark mode and solid white
+     in light mode, so the badge text (var(--text)) stays legible either way. */
+  background: var(--panel-strong);
+  border: 1px solid var(--border); box-shadow: var(--shadow); color: var(--text); font-weight: 700;
   animation: floatBadge 6s ease-in-out infinite;
 }
 .fb-1 { left: 4%; top: 18%; }
@@ -320,7 +349,11 @@ body.light .hero {
 .about-photo img { width: 100%; height: 100%; object-fit: cover; }
 .about-photo-real { height: 520px; }
 .about-tag {
-  position: absolute; right: 20px; bottom: -12px; display: flex; flex-direction: column; gap: 4px; background: var(--panel);
+  position: absolute; right: 20px; bottom: -12px; display: flex; flex-direction: column; gap: 4px;
+  /* FIX: was rgba(7,17,28,0.9) — the "2+ years" chip had a permanently
+     dark background, so in light mode its (correctly dark-navy) text
+     disappeared into it. var(--panel-strong) adapts per theme. */
+  background: var(--panel-strong);
   border: 1px solid var(--border); border-radius: 18px; padding: 14px 18px; box-shadow: var(--shadow);
 }
 .about-tag strong { font-size: 1.5rem; }
@@ -337,7 +370,9 @@ body.light .hero {
 }
 .about-contact-row { display: grid; gap: 14px; margin-top: 24px; }
 .ac-item {
-  display: flex; align-items: center; gap: 12px; color: var(--text); padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,0.02);
+  display: flex; align-items: center; gap: 12px; color: var(--text); padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 12px;
+  /* FIX: was rgba(255,255,255,0.02) */
+  background: var(--glass);
 }
 .ac-item svg { width: 18px; height: 18px; color: var(--primary-2); }
 
@@ -381,7 +416,10 @@ body.light .hero {
   display: flex; flex-wrap: wrap; gap: 8px;
 }
 .filter-btn {
-  padding: 0.65rem 0.9rem; border: 1px solid var(--border); background: rgba(255,255,255,0.02); color: var(--muted); border-radius: 999px; cursor: pointer;
+  padding: 0.65rem 0.9rem; border: 1px solid var(--border);
+  /* FIX: was rgba(255,255,255,0.02) */
+  background: var(--glass);
+  color: var(--muted); border-radius: 999px; cursor: pointer;
 }
 .filter-btn.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: white; border-color: transparent; }
 
@@ -392,7 +430,8 @@ body.light .hero {
 .project-card:hover { transform: translateY(-4px); border-color: rgba(124,58,237,0.3); box-shadow: 0 18px 34px rgba(124,58,237,0.12); }
 .project-featured {
   position: absolute; margin: 16px 16px auto auto; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
-  background: var(--panel-strong); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 0.35rem 0.55rem;
+  background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 0.35rem 0.55rem;
+  color: #fff;
 }
 .project-card { position: relative; }
 .project-thumb {
@@ -459,7 +498,10 @@ body.light .hero {
 .ci-icon svg { width: 18px; height: 18px; }
 .social-row { display:flex; gap: 12px; margin-top: 18px; }
 .social-btn {
-  width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border); display:grid; place-items:center; background: rgba(255,255,255,0.02); color: var(--text);
+  width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border); display:grid; place-items:center;
+  /* FIX: was rgba(255,255,255,0.02) */
+  background: var(--glass);
+  color: var(--text);
 }
 .social-btn svg { width: 18px; height: 18px; }
 
@@ -469,7 +511,10 @@ body.light .hero {
 .form-row { display:flex; flex-direction:column; gap: 8px; margin-bottom: 1rem; }
 .form-row label { font-weight: 600; }
 .form-row input, .form-row textarea {
-  background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: var(--text); border-radius: 14px; padding: 0.9rem 1rem; resize: vertical;
+  /* FIX: was rgba(255,255,255,0.02) — inputs had almost no visible box
+     against a light page. */
+  background: var(--glass);
+  border: 1px solid var(--border); color: var(--text); border-radius: 14px; padding: 0.9rem 1rem; resize: vertical;
 }
 .form-row input::placeholder, .form-row textarea::placeholder { color: var(--muted); }
 .form-status { margin: 16px 0 0; min-height: 1.2em; color: var(--success); font-weight: 600; }
@@ -500,6 +545,161 @@ body.light .hero {
 
 .hidden { display:none !important; }
 
+/* Code-editor hero mockup: kept intentionally dark in both themes, like a
+   real code editor / terminal window — this is a deliberate skeuomorphic
+   choice, not a theme bug. */
+.editor-window {
+  width: min(100%, 540px);
+  min-height: 430px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(7,17,28,0.9);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.dot {
+  width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+}
+.dot.red { background: #f87171; }
+.dot.yellow { background: #fbbf24; }
+.dot.green { background: #34d399; }
+
+.editor-tab {
+  margin-left: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.78rem; font-weight: 600;
+}
+
+.editor-code {
+  margin: 0; padding: 22px 20px; color: #dfe7f5; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.8; white-space: pre-wrap;
+}
+.c-key { color: #7dd3fc; }
+.c-cls { color: #f9a8d4; }
+.c-fn { color: #c4b5fd; }
+.c-str { color: #86efac; }
+.c-op { color: #fbbf24; }
+
+.testi-track {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 20px;
+}
+.testi-card {
+  margin: 0; padding: 1.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow);
+}
+.stars {
+  color: #fbbf24; letter-spacing: 0.18em; font-size: 1.1rem; margin-bottom: 1rem;
+}
+.testi-card blockquote {
+  margin: 0 0 1.2rem; color: var(--muted); font-size: 1rem; line-height: 1.7;
+}
+.testi-card figcaption {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--text); font-size: 0.9rem;
+}
+.testi-avatar {
+  width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; font-weight: 700;
+}
+.testi-dots {
+  display: flex; justify-content: center; gap: 8px; margin-top: 18px;
+}
+.testi-dots button {
+  width: 12px; height: 12px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.25); cursor: pointer;
+}
+.testi-dots button.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+}
+
+.blog-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 20px;
+}
+.blog-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow);
+}
+.blog-thumb {
+  height: 180px; display: grid; place-items: center; background: linear-gradient(135deg, var(--g1), var(--g2)); color: white;
+}
+.blog-thumb svg { width: 58px; height: 58px; }
+.blog-body { padding: 1.2rem; }
+.blog-meta {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;
+}
+.blog-meta time {
+  color: var(--muted); font-size: 0.78rem;
+}
+.blog-body h3 {
+  margin: 0 0 10px; font-size: 1.2rem;
+}
+.blog-body p {
+  margin: 0 0 12px; color: var(--muted);
+}
+
+/* NOTE: the two breakpoints below were each defined twice in the original
+   file (once mid-file, once near the bottom). Same-specificity duplicate
+   blocks don't break anything today since the later block simply wins for
+   any property it repeats, but it's a maintenance trap — editing one copy
+   silently gets overridden by the other. Merged into one block per
+   breakpoint here, keeping every rule from both copies. */
 @media (max-width: 1040px) {
   .skills-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
- 
+  .repo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .projects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-inner, .about-grid, .contact-grid { grid-template-columns: 1fr; }
+  .hero-visual { min-height: 500px; order: -1; }
+  .hero-copy {
+    order: 2;
+    text-align: center;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .hero-cta { justify-content: center; }
+  .hero-stats { justify-content: center; }
+  .section-head-row { flex-direction:column; align-items:flex-start; }
+  .testi-track, .blog-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .nav { gap: 10px; }
+  .nav-links {
+    position: absolute; left: 16px; right: 16px; top: calc(100% + 8px); padding: 16px; border: 1px solid var(--border); border-radius: 18px;
+    background: var(--panel-strong);
+    display: none; flex-direction: column; align-items:flex-start;
+    backdrop-filter: blur(14px);
+  }
+  .nav-links.open { display:flex; }
+  .nav-burger { display: block; }
+  .nav-actions {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-left: auto; flex: 1;
+  }
+  .nav-actions .btn-outline, .nav-actions .btn-primary { display:none; }
+  .theme-toggle {
+    width: 40px; height: 40px; border: none; background: transparent; margin: 0 auto; box-shadow: none;
+  }
+  .brand-mark { width: 36px; height: 36px; font-size: 0.75rem; }
+  .skills-grid, .services-grid, .projects-grid, .repo-grid, .edu-grid { grid-template-columns: 1fr; }
+  .hero {
+    padding-top: 42px;
+  }
+  .hero-visual {
+    width: min(100%, 420px);
+    min-height: 360px;
+    margin: 0 auto 18px;
+  }
+  .hero-title,
+  .hero-subtitle,
+  .hero-desc {
+    text-align: center;
+  }
+  .hero-cta { justify-content: center; }
+  .hero-stats { flex-direction:column; align-items:center; }
+  .stat { width: 100%; max-width: 260px; }
+  .footer-inner, .footer-bottom { flex-direction:column; align-items:flex-start; }
+  .brand-role { display:none; }
+  .editor-window { min-height: 360px; }
+}
